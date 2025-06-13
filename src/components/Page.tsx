@@ -18,6 +18,13 @@ const MODELS = [
 ]
 
 export default function Page() {
+  // Состояния авторизации
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [loginError, setLoginError] = useState('')
+
+  // Основные состояния
   const [model, setModel] = useState(MODELS[0].value)
   const [maxTokens, setMaxTokens] = useState('2000')
   const [temperature, setTemperature] = useState('0.7')
@@ -26,6 +33,31 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
+
+  // Функция авторизации
+  const handleLogin = (e) => {
+    e.preventDefault()
+    setLoginError('')
+
+    // Простая проверка логина и пароля (в реальном проекте - API запрос)
+    if (username === 'admin' && password === 'checkMe1902') {
+      setIsAuthenticated(true)
+      setUsername('')
+      setPassword('')
+    } else {
+      setLoginError('Неверный логин или пароль')
+    }
+  }
+
+  // Функция выхода
+  const handleLogout = () => {
+    setIsAuthenticated(false)
+    setUsername('')
+    setPassword('')
+    setImages([])
+    setResult(null)
+    setError(null)
+  }
 
   const handleFileUpload = useCallback((event) => {
     const files = Array.from(event.target.files)
@@ -145,9 +177,82 @@ export default function Page() {
     }
   }
 
+  // Форма авторизации
+  if (!isAuthenticated) {
+    return (
+      <div className='container'>
+        <h1 className='title'>🔐 Авторизация</h1>
+
+        <div className='card' style={{ maxWidth: '400px', margin: '0 auto' }}>
+          <form onSubmit={handleLogin}>
+            <div className='form-group'>
+              <label className='form-label'>Логин</label>
+              <input
+                type='text'
+                className='form-input'
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder='Введите логин'
+                required
+              />
+            </div>
+
+            <div className='form-group'>
+              <label className='form-label'>Пароль</label>
+              <input
+                type='password'
+                className='form-input'
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder='Введите пароль'
+                required
+              />
+            </div>
+
+            {loginError && (
+              <div
+                style={{
+                  background: '#fee2e2',
+                  color: '#dc2626',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  marginBottom: '20px'
+                }}
+              >
+                ❌ {loginError}
+              </div>
+            )}
+
+            <button type='submit' className='btn btn-primary'>
+              🚀 Войти
+            </button>
+          </form>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className='container'>
-      <h1 className='title'>🧠 Анализатор совместимости Claude AI</h1>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '20px'
+      }}>
+        <h1 className='title'>🧠 Анализатор Claude AI</h1>
+        <button
+          onClick={handleLogout}
+          className='btn'
+          style={{
+            background: '#ef4444',
+            color: 'white',
+            border: 'none'
+          }}
+        >
+          🚪 Выйти
+        </button>
+      </div>
 
       <div className='card'>
         <form onSubmit={handleSubmit}>
@@ -211,7 +316,7 @@ export default function Page() {
                   Перетащите изображения сюда или нажмите для выбора
                 </div>
                 <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                  Поддерживаются JPG, JPEG, PNG
+                  Поддерживаются JPG, JPEG, PNG до 5Мб
                 </div>
               </div>
               <input
@@ -276,7 +381,7 @@ export default function Page() {
                 Анализируем...
               </>
             ) : (
-              <>🚀 Проанализировать совместимость</>
+              <>🚀 Запустить анализ</>
             )}
           </button>
         </form>
