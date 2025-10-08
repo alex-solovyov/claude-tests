@@ -1,7 +1,7 @@
 /* eslint-disable */
 // @ts-nocheck
 'use client'
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import axios from 'axios'
 
 const PROVIDERS = [
@@ -56,6 +56,8 @@ const OPENAI_PRICING = {
 
 const USD_TO_RUB = 90
 
+const AUTH_STORAGE_KEY = 'app-authenticated'
+
 const getDefaultModel = (provider) => {
   if (provider === 'grok') return GROK_MODELS[0].value
   if (provider === 'openai') return OPENAI_MODELS[0].value
@@ -65,9 +67,20 @@ const getDefaultModel = (provider) => {
 export default function Page() {
   // Состояния авторизации
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [authChecked, setAuthChecked] = useState(false)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loginError, setLoginError] = useState('')
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const storedAuth = localStorage.getItem(AUTH_STORAGE_KEY)
+    if (storedAuth === 'true') {
+      setIsAuthenticated(true)
+    }
+    setAuthChecked(true)
+  }, [])
 
   // Основные состояния
   const [provider, setProvider] = useState('claude')
@@ -88,6 +101,9 @@ export default function Page() {
     // Простая проверка логина и пароля (в реальном проекте - API запрос)
     if (username === 'admin' && password === 'checkMe1902') {
       setIsAuthenticated(true)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(AUTH_STORAGE_KEY, 'true')
+      }
       setUsername('')
       setPassword('')
     } else {
@@ -98,6 +114,9 @@ export default function Page() {
   // Функция выхода
   const handleLogout = () => {
     setIsAuthenticated(false)
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(AUTH_STORAGE_KEY)
+    }
     setUsername('')
     setPassword('')
     setImages([])
@@ -278,6 +297,19 @@ export default function Page() {
   }
 
   // Форма авторизации
+  if (!authChecked) {
+    return (
+      <div className='container'>
+        <div className='card' style={{ maxWidth: '400px', margin: '0 auto' }}>
+          <div className='loader'>
+            <div className='spinner'></div>
+            <div>Проверяем авторизацию...</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (!isAuthenticated) {
     return (
       <div className='container'>
