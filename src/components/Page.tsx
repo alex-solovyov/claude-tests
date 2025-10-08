@@ -4,18 +4,63 @@
 import React, { useState, useCallback } from 'react'
 import axios from 'axios'
 
-const MODELS = [
+const PROVIDERS = [
+  { value: 'claude', label: 'Claude API' },
+  { value: 'grok', label: 'Grok API' },
+  { value: 'openai', label: 'ChatGPT API' }
+]
+
+const CLAUDE_MODELS = [
+  {
+    value: 'claude-sonnet-4-5-20250929',
+    label: 'Claude Sonnet 4.5 (2025-09-29)'
+  },
   { value: 'claude-sonnet-4-20250514', label: 'Claude Sonnet 4 (2025-05-14)' },
   {
     value: 'claude-3-7-sonnet-20250219',
     label: 'Claude 3.7 Sonnet (2025-02-19)'
-  },
-  {
-    value: 'claude-3-5-sonnet-20241022',
-    label: 'Claude 3.5 Sonnet (2024-10-22)'
-  },
-  { value: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku (2024-10-22)' }
+  }
 ]
+
+const GROK_MODELS = [
+  { value: 'grok-4-fast-reasoning', label: 'Grok 4 Fast (Reasoning)' },
+  { value: 'grok-4-fast-non-reasoning', label: 'Grok 4 Fast (Non-Reasoning)' },
+  { value: 'grok-4-0709', label: 'Grok 4 (0709)' }
+]
+
+const OPENAI_MODELS = [
+  { value: 'gpt-5', label: 'GPT-5' },
+  { value: 'gpt-5-mini', label: 'GPT-5 Mini' },
+  { value: 'gpt-5-nano', label: 'GPT-5 Nano' },
+  { value: 'gpt-5-chat-latest', label: 'GPT-5 Chat Latest' }
+]
+
+const CLAUDE_PRICING = {
+  'claude-sonnet-4-5-20250929': { input: 3, output: 15 },
+  'claude-sonnet-4-20250514': { input: 3, output: 15 },
+  'claude-3-7-sonnet-20250219': { input: 3, output: 15 }
+}
+
+const GROK_PRICING = {
+  'grok-4-fast-reasoning': { input: 0.2, output: 0.5 },
+  'grok-4-fast-non-reasoning': { input: 0.2, output: 0.5 },
+  'grok-4-0709': { input: 3, output: 15 }
+}
+
+const OPENAI_PRICING = {
+  'gpt-5': { input: 1.25, output: 10 },
+  'gpt-5-mini': { input: 0.25, output: 2 },
+  'gpt-5-nano': { input: 0.05, output: 0.4 },
+  'gpt-5-chat-latest': { input: 1.25, output: 10 }
+}
+
+const USD_TO_RUB = 90
+
+const getDefaultModel = (provider) => {
+  if (provider === 'grok') return GROK_MODELS[0].value
+  if (provider === 'openai') return OPENAI_MODELS[0].value
+  return CLAUDE_MODELS[0].value
+}
 
 export default function Page() {
   // Состояния авторизации
@@ -25,7 +70,8 @@ export default function Page() {
   const [loginError, setLoginError] = useState('')
 
   // Основные состояния
-  const [model, setModel] = useState(MODELS[0].value)
+  const [provider, setProvider] = useState('claude')
+  const [model, setModel] = useState(getDefaultModel('claude'))
   const [maxTokens, setMaxTokens] = useState('2000')
   const [temperature, setTemperature] = useState('0.7')
   const [systemPrompt, setSystemPrompt] = useState('')
@@ -57,6 +103,18 @@ export default function Page() {
     setImages([])
     setResult(null)
     setError(null)
+  }
+
+  const currentModels =
+    provider === 'claude'
+      ? CLAUDE_MODELS
+      : provider === 'grok'
+      ? GROK_MODELS
+      : OPENAI_MODELS
+
+  const handleProviderChange = (value) => {
+    setProvider(value)
+    setModel(getDefaultModel(value))
   }
 
   const handleFileUpload = useCallback((event) => {
@@ -126,7 +184,7 @@ export default function Page() {
     setResult(null)
 
     try {
-      const imageContents = images.map((img) => ({
+      const claudeImageContents = images.map((img) => ({
         type: 'image',
         source: {
           type: 'base64',
@@ -135,37 +193,79 @@ export default function Page() {
         }
       }))
 
-      const { data } = await axios.post('/api/claude', {
-        model,
-        max_tokens: maxTokens,
-        temperature,
-        systemPrompt,
-        imageContents
-      })
+      const grokImageContents = images.map((img) => ({
+        data: img.base64,
+        mediaType: img.file.type
+      }))
 
-      const { text, usage } = data
-      const inputTokens = usage.input_tokens || 0
-      const outputTokens = usage.output_tokens || 0
+      const openaiImageContents = images.map((img) => ({
+        data: img.base64,
+        mediaType: img.file.type
+      }))
 
-      const modelPricing = {
-        'claude-sonnet-4-20250514': { input: 3, output: 15 },
-        'claude-3-7-sonnet-20250219': { input: 3, output: 15 },
-        'claude-3-5-sonnet-20241022': { input: 3, output: 15 },
-        'claude-3-5-haiku-20241022': { input: 0.8, output: 4 }
-      }
+      const endpoint =
+        provider === 'claude'
+          ? '/api/claude'
+          : provider === 'grok'
+          ? '/api/grok'
+          : '/api/openai'
 
-      const pricing = modelPricing[model] || { input: 3, output: 15 }
+      const payload =
+        provider === 'claude'
+          ? {
+              model,
+              max_tokens: maxTokens,
+              temperature,
+              systemPrompt,
+              imageContents: claudeImageContents
+            }
+          : provider === 'grok'
+          ? {
+              model,
+              max_tokens: maxTokens,
+              temperature,
+              systemPrompt,
+              imageContents: grokImageContents
+            }
+          : {
+              model,
+              max_tokens: maxTokens,
+              temperature,
+              systemPrompt,
+              imageContents: openaiImageContents
+            }
+
+      const { data } = await axios.post(endpoint, payload)
+      const { text, usage = {} } = data
+
+      const inputTokens =
+        usage.input_tokens ?? usage.prompt_tokens ?? usage.inputTokens ?? 0
+      const outputTokens =
+        usage.output_tokens ??
+        usage.completion_tokens ??
+        usage.outputTokens ??
+        0
+      const totalTokens =
+        usage.total_tokens ?? usage.totalTokens ?? inputTokens + outputTokens
+
+      const pricingMap =
+        provider === 'claude'
+          ? CLAUDE_PRICING
+          : provider === 'grok'
+          ? GROK_PRICING
+          : OPENAI_PRICING
+      const pricing = pricingMap[model] || { input: 3, output: 15 }
       const inputPrice = pricing.input / 1_000_000
       const outputPrice = pricing.output / 1_000_000
       const usd = inputTokens * inputPrice + outputTokens * outputPrice
-      const rub = usd * 90
+      const rub = usd * USD_TO_RUB
 
       setResult({
         text,
         usage: {
           inputTokens,
           outputTokens,
-          totalTokens: inputTokens + outputTokens,
+          totalTokens,
           costUsd: usd,
           costRub: rub
         }
@@ -234,13 +334,23 @@ export default function Page() {
 
   return (
     <div className='container'>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '20px'
-      }}>
-        <h1 className='title'>🧠 Анализатор Claude AI</h1>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '20px'
+        }}
+      >
+        <h1 className='title'>
+          🧠 Анализатор{' '}
+          {provider === 'claude'
+            ? 'Claude'
+            : provider === 'grok'
+            ? 'Grok'
+            : 'ChatGPT'}{' '}
+          API
+        </h1>
         <button
           onClick={handleLogout}
           className='btn'
@@ -258,20 +368,37 @@ export default function Page() {
         <form onSubmit={handleSubmit}>
           <div className='grid-2'>
             <div className='form-group'>
+              <label className='form-label'>Провайдер</label>
+              <select
+                className='form-select'
+                value={provider}
+                onChange={(e) => handleProviderChange(e.target.value)}
+              >
+                {PROVIDERS.map((p) => (
+                  <option key={p.value} value={p.value}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className='form-group'>
               <label className='form-label'>Модель</label>
               <select
                 className='form-select'
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
               >
-                {MODELS.map((m) => (
+                {currentModels.map((m) => (
                   <option key={m.value} value={m.value}>
                     {m.label}
                   </option>
                 ))}
               </select>
             </div>
+          </div>
 
+          <div className='grid-2'>
             <div className='form-group'>
               <label className='form-label'>Максимум токенов</label>
               <input
@@ -280,15 +407,15 @@ export default function Page() {
                 onChange={(e) => setMaxTokens(e.target.value)}
               />
             </div>
-          </div>
 
-          <div className='form-group'>
-            <label className='form-label'>Температура (0.0 - 1.0)</label>
-            <input
-              className='form-input'
-              value={temperature}
-              onChange={(e) => setTemperature(e.target.value)}
-            />
+            <div className='form-group'>
+              <label className='form-label'>Температура (0.0 - 1.0)</label>
+              <input
+                className='form-input'
+                value={temperature}
+                onChange={(e) => setTemperature(e.target.value)}
+              />
+            </div>
           </div>
 
           <div className='form-group'>
