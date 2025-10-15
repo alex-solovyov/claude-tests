@@ -15,11 +15,11 @@ const CLAUDE_MODELS = [
     value: 'claude-sonnet-4-5-20250929',
     label: 'Claude Sonnet 4.5 (2025-09-29)'
   },
-  { value: 'claude-sonnet-4-20250514', label: 'Claude Sonnet 4 (2025-05-14)' },
   {
-    value: 'claude-3-7-sonnet-20250219',
-    label: 'Claude 3.7 Sonnet (2025-02-19)'
-  }
+    value: 'claude-haiku-4-5-20251001',
+    label: 'Claude Haiku 4.5 (2025-10-01)'
+  },
+  { value: 'claude-sonnet-4-20250514', label: 'Claude Sonnet 4 (2025-05-14)' }
 ]
 
 const GROK_MODELS = [
@@ -37,8 +37,8 @@ const OPENAI_MODELS = [
 
 const CLAUDE_PRICING = {
   'claude-sonnet-4-5-20250929': { input: 3, output: 15 },
-  'claude-sonnet-4-20250514': { input: 3, output: 15 },
-  'claude-3-7-sonnet-20250219': { input: 3, output: 15 }
+  'claude-haiku-4-5-20251001': { input: 1, output: 5 },
+  'claude-sonnet-4-20250514': { input: 3, output: 15 }
 }
 
 const GROK_PRICING = {
