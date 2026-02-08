@@ -662,7 +662,7 @@ export default function Page() {
   }, [])
 
   const [model, setModel] = useState(MODELS[0].value)
-  const [maxTokens, setMaxTokens] = useState('2000')
+  const [maxTokens, setMaxTokens] = useState('2048')
   const [temperature, setTemperature] = useState('0.7')
   const [systemPrompt, setSystemPrompt] = useState('')
   const [images, setImages] = useState<UploadedImage[]>([])
