@@ -99,13 +99,6 @@ const MODELS: ModelInfo[] = [
     output: 0.3,
     context: 262_144
   },
-  {
-    value: 'bytedance/ui-tars-7b',
-    label: 'ByteDance: UI-TARS 7B',
-    input: 0.1,
-    output: 0.2,
-    context: 128_000
-  },
 
   // Google
   {
