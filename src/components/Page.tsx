@@ -13,7 +13,7 @@ interface ModelInfo {
 const MODELS: ModelInfo[] = [
   // AllenAI
   {
-    value: 'allenai/molmo2-8b',
+    value: 'allenai/molmo-2-8b',
     label: 'AllenAI: Molmo2 8B',
     input: 0.2,
     output: 0.2,
