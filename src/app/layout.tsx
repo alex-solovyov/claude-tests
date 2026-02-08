@@ -1,21 +1,19 @@
-import type { Metadata } from "next";
-import "./index.css";
+import type { Metadata } from 'next'
+import './index.css'
 
 export const metadata: Metadata = {
-  title: "Claude AI",
-  description: "Claude AI test requests",
-};
+  title: 'AI Tests',
+  description: 'AI test requests'
+}
 
 export default function RootLayout({
-  children,
+  children
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
-    <html lang="ru">
-      <body>
-        {children}
-      </body>
+    <html lang='ru'>
+      <body>{children}</body>
     </html>
-  );
+  )
 }

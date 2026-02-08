@@ -1,71 +1,650 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client'
 import React, { useState, useCallback, useEffect } from 'react'
 import axios from 'axios'
 
-const PROVIDERS = [
-  { value: 'claude', label: 'Claude API' },
-  { value: 'grok', label: 'Grok API' },
-  { value: 'openai', label: 'ChatGPT API' }
-]
+interface ModelInfo {
+  value: string
+  label: string
+  input: number
+  output: number
+  context: number
+}
 
-const CLAUDE_MODELS = [
+const MODELS: ModelInfo[] = [
+  // AllenAI
   {
-    value: 'claude-sonnet-4-5-20250929',
-    label: 'Claude Sonnet 4.5 (2025-09-29)'
+    value: 'allenai/molmo2-8b',
+    label: 'AllenAI: Molmo2 8B',
+    input: 0.2,
+    output: 0.2,
+    context: 36_864
+  },
+
+  // Amazon
+  {
+    value: 'amazon/nova-premier-1.0',
+    label: 'Amazon: Nova Premier 1.0',
+    input: 2.5,
+    output: 12.5,
+    context: 1_000_000
   },
   {
-    value: 'claude-haiku-4-5-20251001',
-    label: 'Claude Haiku 4.5 (2025-10-01)'
+    value: 'amazon/nova-2-lite',
+    label: 'Amazon: Nova 2 Lite',
+    input: 0.3,
+    output: 2.5,
+    context: 1_000_000
   },
-  { value: 'claude-sonnet-4-20250514', label: 'Claude Sonnet 4 (2025-05-14)' }
+
+  // Anthropic
+  {
+    value: 'anthropic/claude-opus-4.6',
+    label: 'Anthropic: Claude Opus 4.6',
+    input: 5,
+    output: 25,
+    context: 1_000_000
+  },
+  {
+    value: 'anthropic/claude-sonnet-4.5',
+    label: 'Anthropic: Claude Sonnet 4.5',
+    input: 3,
+    output: 15,
+    context: 1_000_000
+  },
+  {
+    value: 'anthropic/claude-haiku-4.5',
+    label: 'Anthropic: Claude Haiku 4.5',
+    input: 1,
+    output: 5,
+    context: 200_000
+  },
+
+  // Arcee AI
+  {
+    value: 'arcee-ai/spotlight',
+    label: 'Arcee AI: Spotlight',
+    input: 0.18,
+    output: 0.18,
+    context: 131_072
+  },
+
+  // Baidu
+  {
+    value: 'baidu/ernie-4.5-vl-424b-a47b',
+    label: 'Baidu: ERNIE 4.5 VL 424B A47B',
+    input: 0.42,
+    output: 1.25,
+    context: 123_000
+  },
+  {
+    value: 'baidu/ernie-4.5-vl-28b-a3b',
+    label: 'Baidu: ERNIE 4.5 VL 28B A3B',
+    input: 0.14,
+    output: 0.56,
+    context: 30_000
+  },
+
+  // ByteDance
+  {
+    value: 'bytedance-seed/seed-1.6',
+    label: 'ByteDance Seed: Seed 1.6',
+    input: 0.25,
+    output: 2,
+    context: 262_144
+  },
+  {
+    value: 'bytedance-seed/seed-1.6-flash',
+    label: 'ByteDance Seed: Seed 1.6 Flash',
+    input: 0.075,
+    output: 0.3,
+    context: 262_144
+  },
+  {
+    value: 'bytedance/ui-tars-7b',
+    label: 'ByteDance: UI-TARS 7B',
+    input: 0.1,
+    output: 0.2,
+    context: 128_000
+  },
+
+  // Google
+  {
+    value: 'google/gemini-3-pro-preview',
+    label: 'Google: Gemini 3 Pro Preview',
+    input: 2,
+    output: 12,
+    context: 1_048_576
+  },
+  {
+    value: 'google/gemini-3-pro-image-preview',
+    label: 'Google: Nano Banana Pro (Gemini 3 Pro Image Preview)',
+    input: 2,
+    output: 12,
+    context: 65_536
+  },
+  {
+    value: 'google/gemini-3-flash-preview',
+    label: 'Google: Gemini 3 Flash Preview',
+    input: 0.5,
+    output: 3,
+    context: 1_048_576
+  },
+  {
+    value: 'google/gemini-2.5-pro',
+    label: 'Google: Gemini 2.5 Pro',
+    input: 1.25,
+    output: 10,
+    context: 1_048_576
+  },
+  {
+    value: 'google/gemini-2.5-pro-preview-06-05',
+    label: 'Google: Gemini 2.5 Pro Preview 06-05',
+    input: 1.25,
+    output: 10,
+    context: 1_048_576
+  },
+  {
+    value: 'google/gemini-2.5-pro-preview-05-06',
+    label: 'Google: Gemini 2.5 Pro Preview 05-06',
+    input: 1.25,
+    output: 10,
+    context: 1_048_576
+  },
+  {
+    value: 'google/gemini-2.5-flash',
+    label: 'Google: Gemini 2.5 Flash',
+    input: 0.3,
+    output: 2.5,
+    context: 1_048_576
+  },
+  {
+    value: 'google/gemini-2.5-flash-preview-09-2025',
+    label: 'Google: Gemini 2.5 Flash Preview 09-2025',
+    input: 0.3,
+    output: 2.5,
+    context: 1_048_576
+  },
+  {
+    value: 'google/gemini-2.5-flash-image',
+    label: 'Google: Gemini 2.5 Flash Image (Nano Banana)',
+    input: 0.3,
+    output: 2.5,
+    context: 32_768
+  },
+  {
+    value: 'google/gemini-2.5-flash-lite',
+    label: 'Google: Gemini 2.5 Flash Lite',
+    input: 0.1,
+    output: 0.4,
+    context: 1_048_576
+  },
+  {
+    value: 'google/gemini-2.5-flash-lite-preview-09-2025',
+    label: 'Google: Gemini 2.5 Flash Lite Preview 09-2025',
+    input: 0.1,
+    output: 0.4,
+    context: 1_048_576
+  },
+  {
+    value: 'google/gemini-2.0-flash-lite',
+    label: 'Google: Gemini 2.0 Flash Lite',
+    input: 0.075,
+    output: 0.3,
+    context: 1_048_576
+  },
+  {
+    value: 'google/gemma-3-27b',
+    label: 'Google: Gemma 3 27B',
+    input: 0.04,
+    output: 0.15,
+    context: 128_000
+  },
+  {
+    value: 'google/gemma-3-27b:free',
+    label: 'Google: Gemma 3 27B (free)',
+    input: 0,
+    output: 0,
+    context: 131_072
+  },
+  {
+    value: 'google/gemma-3-12b',
+    label: 'Google: Gemma 3 12B',
+    input: 0.03,
+    output: 0.1,
+    context: 131_072
+  },
+  {
+    value: 'google/gemma-3-12b:free',
+    label: 'Google: Gemma 3 12B (free)',
+    input: 0,
+    output: 0,
+    context: 32_768
+  },
+  {
+    value: 'google/gemma-3-4b',
+    label: 'Google: Gemma 3 4B',
+    input: 0.01703,
+    output: 0.06815,
+    context: 96_000
+  },
+  {
+    value: 'google/gemma-3-4b:free',
+    label: 'Google: Gemma 3 4B (free)',
+    input: 0,
+    output: 0,
+    context: 32_768
+  },
+
+  // Meta
+  {
+    value: 'meta-llama/llama-4-maverick',
+    label: 'Meta: Llama 4 Maverick',
+    input: 0.15,
+    output: 0.6,
+    context: 1_048_576
+  },
+  {
+    value: 'meta-llama/llama-4-scout',
+    label: 'Meta: Llama 4 Scout',
+    input: 0.08,
+    output: 0.3,
+    context: 327_680
+  },
+  {
+    value: 'meta-llama/llama-guard-4-12b',
+    label: 'Meta: Llama Guard 4 12B',
+    input: 0.18,
+    output: 0.18,
+    context: 163_840
+  },
+
+  // Mistral
+  {
+    value: 'mistralai/mistral-large-3-2512',
+    label: 'Mistral: Mistral Large 3 2512',
+    input: 0.5,
+    output: 1.5,
+    context: 262_144
+  },
+  {
+    value: 'mistralai/mistral-medium-3.1',
+    label: 'Mistral: Mistral Medium 3.1',
+    input: 0.4,
+    output: 2,
+    context: 131_072
+  },
+  {
+    value: 'mistralai/mistral-medium-3',
+    label: 'Mistral: Mistral Medium 3',
+    input: 0.4,
+    output: 2,
+    context: 131_072
+  },
+  {
+    value: 'mistralai/mistral-small-3.2-24b',
+    label: 'Mistral: Mistral Small 3.2 24B',
+    input: 0.06,
+    output: 0.18,
+    context: 131_072
+  },
+  {
+    value: 'mistralai/mistral-small-3.1-24b',
+    label: 'Mistral: Mistral Small 3.1 24B',
+    input: 0.03,
+    output: 0.11,
+    context: 131_072
+  },
+  {
+    value: 'mistralai/mistral-small-3.1-24b:free',
+    label: 'Mistral: Mistral Small 3.1 24B (free)',
+    input: 0,
+    output: 0,
+    context: 128_000
+  },
+  {
+    value: 'mistralai/ministral-3-14b-2512',
+    label: 'Mistral: Ministral 3 14B 2512',
+    input: 0.2,
+    output: 0.2,
+    context: 262_144
+  },
+  {
+    value: 'mistralai/ministral-3-8b-2512',
+    label: 'Mistral: Ministral 3 8B 2512',
+    input: 0.15,
+    output: 0.15,
+    context: 262_144
+  },
+  {
+    value: 'mistralai/ministral-3-3b-2512',
+    label: 'Mistral: Ministral 3 3B 2512',
+    input: 0.1,
+    output: 0.1,
+    context: 131_072
+  },
+
+  // MoonshotAI
+  {
+    value: 'moonshotai/kimi-k2.5',
+    label: 'MoonshotAI: Kimi K2.5',
+    input: 0.3,
+    output: 1.5,
+    context: 262_144
+  },
+
+  // NVIDIA
+  {
+    value: 'nvidia/nemotron-nano-12b-2-vl',
+    label: 'NVIDIA: Nemotron Nano 12B 2 VL',
+    input: 0.2,
+    output: 0.6,
+    context: 131_072
+  },
+  {
+    value: 'nvidia/nemotron-nano-12b-2-vl:free',
+    label: 'NVIDIA: Nemotron Nano 12B 2 VL (free)',
+    input: 0,
+    output: 0,
+    context: 128_000
+  },
+
+  // OpenAI
+  {
+    value: 'openai/gpt-5.2',
+    label: 'OpenAI: GPT-5.2',
+    input: 1.75,
+    output: 14,
+    context: 400_000
+  },
+  {
+    value: 'openai/gpt-5.2-chat',
+    label: 'OpenAI: GPT-5.2 Chat',
+    input: 1.75,
+    output: 14,
+    context: 128_000
+  },
+  {
+    value: 'openai/gpt-5.2-codex',
+    label: 'OpenAI: GPT-5.2-Codex',
+    input: 1.75,
+    output: 14,
+    context: 400_000
+  },
+  {
+    value: 'openai/gpt-5.1',
+    label: 'OpenAI: GPT-5.1',
+    input: 1.25,
+    output: 10,
+    context: 400_000
+  },
+  {
+    value: 'openai/gpt-5.1-chat',
+    label: 'OpenAI: GPT-5.1 Chat',
+    input: 1.25,
+    output: 10,
+    context: 128_000
+  },
+  {
+    value: 'openai/gpt-5.1-codex',
+    label: 'OpenAI: GPT-5.1-Codex',
+    input: 1.25,
+    output: 10,
+    context: 400_000
+  },
+  {
+    value: 'openai/gpt-5.1-codex-max',
+    label: 'OpenAI: GPT-5.1-Codex-Max',
+    input: 1.25,
+    output: 10,
+    context: 400_000
+  },
+  {
+    value: 'openai/gpt-5.1-codex-mini',
+    label: 'OpenAI: GPT-5.1-Codex-Mini',
+    input: 0.25,
+    output: 2,
+    context: 400_000
+  },
+  {
+    value: 'openai/gpt-5-image',
+    label: 'OpenAI: GPT-5 Image',
+    input: 10,
+    output: 10,
+    context: 400_000
+  },
+  {
+    value: 'openai/gpt-5-image-mini',
+    label: 'OpenAI: GPT-5 Image Mini',
+    input: 2.5,
+    output: 2,
+    context: 400_000
+  },
+  {
+    value: 'openai/gpt-5-codex',
+    label: 'OpenAI: GPT-5 Codex',
+    input: 1.25,
+    output: 10,
+    context: 400_000
+  },
+  {
+    value: 'openai/gpt-4.1',
+    label: 'OpenAI: GPT-4.1',
+    input: 2,
+    output: 8,
+    context: 1_047_576
+  },
+  {
+    value: 'openai/gpt-4.1-mini',
+    label: 'OpenAI: GPT-4.1 Mini',
+    input: 0.4,
+    output: 1.6,
+    context: 1_047_576
+  },
+  {
+    value: 'openai/gpt-4.1-nano',
+    label: 'OpenAI: GPT-4.1 Nano',
+    input: 0.1,
+    output: 0.4,
+    context: 1_047_576
+  },
+  {
+    value: 'openai/o4-mini',
+    label: 'OpenAI: o4 Mini',
+    input: 1.1,
+    output: 4.4,
+    context: 200_000
+  },
+  {
+    value: 'openai/o4-mini-high',
+    label: 'OpenAI: o4 Mini High',
+    input: 1.1,
+    output: 4.4,
+    context: 200_000
+  },
+  {
+    value: 'openai/o4-mini-deep-research',
+    label: 'OpenAI: o4 Mini Deep Research',
+    input: 2,
+    output: 8,
+    context: 200_000
+  },
+  {
+    value: 'openai/o3',
+    label: 'OpenAI: o3',
+    input: 2,
+    output: 8,
+    context: 200_000
+  },
+  {
+    value: 'openai/o1-pro',
+    label: 'OpenAI: o1-pro',
+    input: 150,
+    output: 600,
+    context: 200_000
+  },
+
+  // OpenGVLab
+  {
+    value: 'opengvlab/internvl3-78b',
+    label: 'OpenGVLab: InternVL3 78B',
+    input: 0.15,
+    output: 0.6,
+    context: 32_768
+  },
+
+  // Perplexity
+  {
+    value: 'perplexity/sonar-pro-search',
+    label: 'Perplexity: Sonar Pro Search',
+    input: 3,
+    output: 15,
+    context: 200_000
+  },
+  {
+    value: 'perplexity/sonar-pro',
+    label: 'Perplexity: Sonar Pro',
+    input: 3,
+    output: 15,
+    context: 200_000
+  },
+  {
+    value: 'perplexity/sonar-reasoning-pro',
+    label: 'Perplexity: Sonar Reasoning Pro',
+    input: 2,
+    output: 8,
+    context: 128_000
+  },
+
+  // Qwen
+  {
+    value: 'qwen/qwen3-vl-235b-a22b-thinking',
+    label: 'Qwen: Qwen3 VL 235B A22B Thinking',
+    input: 0.45,
+    output: 3.5,
+    context: 262_144
+  },
+  {
+    value: 'qwen/qwen3-vl-235b-a22b-instruct',
+    label: 'Qwen: Qwen3 VL 235B A22B Instruct',
+    input: 0.2,
+    output: 0.88,
+    context: 262_144
+  },
+  {
+    value: 'qwen/qwen3-vl-32b-instruct',
+    label: 'Qwen: Qwen3 VL 32B Instruct',
+    input: 0.5,
+    output: 1.5,
+    context: 262_144
+  },
+  {
+    value: 'qwen/qwen3-vl-30b-a3b-thinking',
+    label: 'Qwen: Qwen3 VL 30B A3B Thinking',
+    input: 0.2,
+    output: 1,
+    context: 131_072
+  },
+  {
+    value: 'qwen/qwen3-vl-30b-a3b-instruct',
+    label: 'Qwen: Qwen3 VL 30B A3B Instruct',
+    input: 0.15,
+    output: 0.6,
+    context: 262_144
+  },
+  {
+    value: 'qwen/qwen3-vl-8b-thinking',
+    label: 'Qwen: Qwen3 VL 8B Thinking',
+    input: 0.18,
+    output: 2.1,
+    context: 256_000
+  },
+  {
+    value: 'qwen/qwen3-vl-8b-instruct',
+    label: 'Qwen: Qwen3 VL 8B Instruct',
+    input: 0.08,
+    output: 0.5,
+    context: 131_072
+  },
+  {
+    value: 'qwen/qwen2.5-vl-32b-instruct',
+    label: 'Qwen: Qwen2.5 VL 32B Instruct',
+    input: 0.05,
+    output: 0.22,
+    context: 16_384
+  },
+
+  // StepFun
+  {
+    value: 'stepfun/step3',
+    label: 'StepFun: Step3',
+    input: 0.57,
+    output: 1.42,
+    context: 65_536
+  },
+
+  // xAI
+  {
+    value: 'x-ai/grok-4.1-fast',
+    label: 'xAI: Grok 4.1 Fast',
+    input: 0.2,
+    output: 0.5,
+    context: 2_000_000
+  },
+  {
+    value: 'x-ai/grok-4',
+    label: 'xAI: Grok 4',
+    input: 3,
+    output: 15,
+    context: 256_000
+  },
+  {
+    value: 'x-ai/grok-4-fast',
+    label: 'xAI: Grok 4 Fast',
+    input: 0.2,
+    output: 0.5,
+    context: 2_000_000
+  },
+
+  // Z.AI
+  {
+    value: 'z-ai/glm-4.6v',
+    label: 'Z.AI: GLM 4.6V',
+    input: 0.3,
+    output: 0.9,
+    context: 131_072
+  },
+  {
+    value: 'z-ai/glm-4.5v',
+    label: 'Z.AI: GLM 4.5V',
+    input: 0.6,
+    output: 1.8,
+    context: 65_536
+  }
 ]
 
-const GROK_MODELS = [
-  { value: 'grok-4-fast-reasoning', label: 'Grok 4 Fast (Reasoning)' },
-  { value: 'grok-4-fast-non-reasoning', label: 'Grok 4 Fast (Non-Reasoning)' },
-  { value: 'grok-4-0709', label: 'Grok 4 (0709)' }
-]
-
-const OPENAI_MODELS = [
-  { value: 'gpt-5', label: 'GPT-5' },
-  { value: 'gpt-5-mini', label: 'GPT-5 Mini' },
-  { value: 'gpt-5-nano', label: 'GPT-5 Nano' },
-  { value: 'gpt-5-chat-latest', label: 'GPT-5 Chat Latest' }
-]
-
-const CLAUDE_PRICING = {
-  'claude-sonnet-4-5-20250929': { input: 3, output: 15 },
-  'claude-haiku-4-5-20251001': { input: 1, output: 5 },
-  'claude-sonnet-4-20250514': { input: 3, output: 15 }
-}
-
-const GROK_PRICING = {
-  'grok-4-fast-reasoning': { input: 0.2, output: 0.5 },
-  'grok-4-fast-non-reasoning': { input: 0.2, output: 0.5 },
-  'grok-4-0709': { input: 3, output: 15 }
-}
-
-const OPENAI_PRICING = {
-  'gpt-5': { input: 1.25, output: 10 },
-  'gpt-5-mini': { input: 0.25, output: 2 },
-  'gpt-5-nano': { input: 0.05, output: 0.4 },
-  'gpt-5-chat-latest': { input: 1.25, output: 10 }
-}
-
-const USD_TO_RUB = 90
+const USD_TO_RUB = 77
 
 const AUTH_STORAGE_KEY = 'app-authenticated'
 
-const getDefaultModel = (provider) => {
-  if (provider === 'grok') return GROK_MODELS[0].value
-  if (provider === 'openai') return OPENAI_MODELS[0].value
-  return CLAUDE_MODELS[0].value
+interface UploadedImage {
+  id: number
+  file: File
+  url: string
+  base64: string
+}
+
+interface ResultData {
+  text: string
+  usage: {
+    inputTokens: number
+    outputTokens: number
+    totalTokens: number
+    costUsd: number
+    costRub: number
+  }
 }
 
 export default function Page() {
-  // Состояния авторизации
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
   const [username, setUsername] = useState('')
@@ -82,23 +661,21 @@ export default function Page() {
     setAuthChecked(true)
   }, [])
 
-  // Основные состояния
-  const [provider, setProvider] = useState('claude')
-  const [model, setModel] = useState(getDefaultModel('claude'))
+  const [model, setModel] = useState(MODELS[0].value)
   const [maxTokens, setMaxTokens] = useState('2000')
   const [temperature, setTemperature] = useState('0.7')
   const [systemPrompt, setSystemPrompt] = useState('')
-  const [images, setImages] = useState([])
+  const [images, setImages] = useState<UploadedImage[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [result, setResult] = useState(null)
-  const [error, setError] = useState(null)
+  const [result, setResult] = useState<ResultData | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  // Функция авторизации
-  const handleLogin = (e) => {
+  const selectedModel = MODELS.find((m) => m.value === model) ?? MODELS[0]
+
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
     setLoginError('')
 
-    // Простая проверка логина и пароля (в реальном проекте - API запрос)
     if (username === 'admin' && password === 'checkMe1902') {
       setIsAuthenticated(true)
       if (typeof window !== 'undefined') {
@@ -111,7 +688,6 @@ export default function Page() {
     }
   }
 
-  // Функция выхода
   const handleLogout = () => {
     setIsAuthenticated(false)
     if (typeof window !== 'undefined') {
@@ -124,46 +700,37 @@ export default function Page() {
     setError(null)
   }
 
-  const currentModels =
-    provider === 'claude'
-      ? CLAUDE_MODELS
-      : provider === 'grok'
-      ? GROK_MODELS
-      : OPENAI_MODELS
+  const handleFileUpload = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(event.target.files ?? [])
+      processFiles(files)
+    },
+    []
+  )
 
-  const handleProviderChange = (value) => {
-    setProvider(value)
-    setModel(getDefaultModel(value))
-  }
-
-  const handleFileUpload = useCallback((event) => {
-    const files = Array.from(event.target.files)
-    processFiles(files)
-  }, [])
-
-  const handleDrop = useCallback((event) => {
+  const handleDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault()
     const files = Array.from(event.dataTransfer.files)
     processFiles(files)
   }, [])
 
-  const processFiles = (files) => {
+  const processFiles = (files: File[]) => {
     const imageFiles = files.filter(
       (file) =>
-        file.type.startsWith('image/') &&
-        (file.type === 'image/jpeg' ||
-          file.type === 'image/png' ||
-          file.type === 'image/jpg')
+        file.type === 'image/jpeg' ||
+        file.type === 'image/png' ||
+        file.type === 'image/jpg'
     )
 
     imageFiles.forEach((file) => {
       const reader = new FileReader()
       reader.onload = (e) => {
-        const newImage = {
+        const dataUrl = e.target?.result as string
+        const newImage: UploadedImage = {
           id: Date.now() + Math.random(),
           file,
-          url: e.target.result,
-          base64: e.target.result.split(',')[1]
+          url: dataUrl,
+          base64: dataUrl.split(',')[1]
         }
         setImages((prev) => [...prev, newImage])
       }
@@ -171,11 +738,17 @@ export default function Page() {
     })
   }
 
-  const removeImage = (id) => {
+  const removeImage = (id: number) => {
     setImages((prev) => prev.filter((img) => img.id !== id))
   }
 
-  const handleSubmit = async (event) => {
+  const formatContext = (ctx: number): string => {
+    if (ctx >= 1_000_000) return `${(ctx / 1_000_000).toFixed(1)}M`
+    if (ctx >= 1_000) return `${(ctx / 1_000).toFixed(0)}K`
+    return String(ctx)
+  }
+
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
 
     if (!systemPrompt.trim()) {
@@ -203,79 +776,27 @@ export default function Page() {
     setResult(null)
 
     try {
-      const claudeImageContents = images.map((img) => ({
-        type: 'image',
-        source: {
-          type: 'base64',
-          media_type: img.file.type,
-          data: img.base64
-        }
-      }))
-
-      const grokImageContents = images.map((img) => ({
+      const imageContents = images.map((img) => ({
         data: img.base64,
         mediaType: img.file.type
       }))
 
-      const openaiImageContents = images.map((img) => ({
-        data: img.base64,
-        mediaType: img.file.type
-      }))
+      const { data } = await axios.post('/api/openrouter', {
+        model,
+        max_tokens: maxTokens,
+        temperature,
+        systemPrompt,
+        imageContents
+      })
 
-      const endpoint =
-        provider === 'claude'
-          ? '/api/claude'
-          : provider === 'grok'
-          ? '/api/grok'
-          : '/api/openai'
-
-      const payload =
-        provider === 'claude'
-          ? {
-              model,
-              max_tokens: maxTokens,
-              temperature,
-              systemPrompt,
-              imageContents: claudeImageContents
-            }
-          : provider === 'grok'
-          ? {
-              model,
-              max_tokens: maxTokens,
-              temperature,
-              systemPrompt,
-              imageContents: grokImageContents
-            }
-          : {
-              model,
-              max_tokens: maxTokens,
-              temperature,
-              systemPrompt,
-              imageContents: openaiImageContents
-            }
-
-      const { data } = await axios.post(endpoint, payload)
       const { text, usage = {} } = data
 
-      const inputTokens =
-        usage.input_tokens ?? usage.prompt_tokens ?? usage.inputTokens ?? 0
-      const outputTokens =
-        usage.output_tokens ??
-        usage.completion_tokens ??
-        usage.outputTokens ??
-        0
-      const totalTokens =
-        usage.total_tokens ?? usage.totalTokens ?? inputTokens + outputTokens
+      const inputTokens = usage.prompt_tokens ?? 0
+      const outputTokens = usage.completion_tokens ?? 0
+      const totalTokens = usage.total_tokens ?? inputTokens + outputTokens
 
-      const pricingMap =
-        provider === 'claude'
-          ? CLAUDE_PRICING
-          : provider === 'grok'
-          ? GROK_PRICING
-          : OPENAI_PRICING
-      const pricing = pricingMap[model] || { input: 3, output: 15 }
-      const inputPrice = pricing.input / 1_000_000
-      const outputPrice = pricing.output / 1_000_000
+      const inputPrice = selectedModel.input / 1_000_000
+      const outputPrice = selectedModel.output / 1_000_000
       const usd = inputTokens * inputPrice + outputTokens * outputPrice
       const rub = usd * USD_TO_RUB
 
@@ -289,14 +810,19 @@ export default function Page() {
           costRub: rub
         }
       })
-    } catch (err: any) {
-      setError(err.response?.data?.details || err.message || 'Ошибка запроса')
+    } catch (err: unknown) {
+      const axiosErr = err as {
+        response?: { data?: { details?: string } }
+        message?: string
+      }
+      setError(
+        axiosErr.response?.data?.details || axiosErr.message || 'Ошибка запроса'
+      )
     } finally {
       setIsLoading(false)
     }
   }
 
-  // Форма авторизации
   if (!authChecked) {
     return (
       <div className='container'>
@@ -313,7 +839,7 @@ export default function Page() {
   if (!isAuthenticated) {
     return (
       <div className='container'>
-        <h1 className='title'>🔐 Авторизация</h1>
+        <h1 className='title'>Авторизация</h1>
 
         <div className='card' style={{ maxWidth: '400px', margin: '0 auto' }}>
           <form onSubmit={handleLogin}>
@@ -351,12 +877,12 @@ export default function Page() {
                   marginBottom: '20px'
                 }}
               >
-                ❌ {loginError}
+                {loginError}
               </div>
             )}
 
             <button type='submit' className='btn btn-primary'>
-              🚀 Войти
+              Войти
             </button>
           </form>
         </div>
@@ -374,14 +900,8 @@ export default function Page() {
           marginBottom: '20px'
         }}
       >
-        <h1 className='title'>
-          🧠 Анализатор{' '}
-          {provider === 'claude'
-            ? 'Claude'
-            : provider === 'grok'
-            ? 'Grok'
-            : 'ChatGPT'}{' '}
-          API
+        <h1 className='title' style={{ marginBottom: 0 }}>
+          AI Tests
         </h1>
         <button
           onClick={handleLogout}
@@ -392,41 +912,38 @@ export default function Page() {
             border: 'none'
           }}
         >
-          🚪 Выйти
+          Выйти
         </button>
       </div>
 
       <div className='card'>
         <form onSubmit={handleSubmit}>
-          <div className='grid-2'>
-            <div className='form-group'>
-              <label className='form-label'>Провайдер</label>
-              <select
-                className='form-select'
-                value={provider}
-                onChange={(e) => handleProviderChange(e.target.value)}
-              >
-                {PROVIDERS.map((p) => (
-                  <option key={p.value} value={p.value}>
-                    {p.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className='form-group'>
-              <label className='form-label'>Модель</label>
-              <select
-                className='form-select'
-                value={model}
-                onChange={(e) => setModel(e.target.value)}
-              >
-                {currentModels.map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
+          <div className='form-group'>
+            <label className='form-label'>Модель</label>
+            <select
+              className='form-select'
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+            >
+              {MODELS.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+            <div
+              style={{
+                marginTop: '8px',
+                fontSize: '13px',
+                color: '#6b7280',
+                display: 'flex',
+                gap: '16px',
+                flexWrap: 'wrap'
+              }}
+            >
+              <span>Контекст: {formatContext(selectedModel.context)}</span>
+              <span>Input: ${selectedModel.input}/1M</span>
+              <span>Output: ${selectedModel.output}/1M</span>
             </div>
           </div>
 
@@ -456,7 +973,7 @@ export default function Page() {
               className='form-textarea'
               value={systemPrompt}
               onChange={(e) => setSystemPrompt(e.target.value)}
-              rows='10'
+              rows={10}
             />
           </div>
 
@@ -467,7 +984,7 @@ export default function Page() {
               onDrop={handleDrop}
               onDragOver={(e) => e.preventDefault()}
               onDragEnter={(e) => e.preventDefault()}
-              onClick={() => document.getElementById('fileInput').click()}
+              onClick={() => document.getElementById('fileInput')?.click()}
             >
               <div>
                 <div style={{ fontSize: '48px', marginBottom: '16px' }}>📸</div>
@@ -516,7 +1033,7 @@ export default function Page() {
                 marginBottom: '20px'
               }}
             >
-              ❌ {error}
+              {error}
             </div>
           )}
 
@@ -540,7 +1057,7 @@ export default function Page() {
                 Анализируем...
               </>
             ) : (
-              <>🚀 Запустить анализ</>
+              'Запустить анализ'
             )}
           </button>
         </form>
@@ -561,7 +1078,7 @@ export default function Page() {
       {result && (
         <div className='card'>
           <h2 style={{ marginBottom: '20px', color: '#374151' }}>
-            🎯 Результат анализа
+            Результат анализа
           </h2>
 
           <div className='result'>
@@ -569,7 +1086,7 @@ export default function Page() {
 
             <div className='result-stats'>
               <h3 style={{ marginBottom: '16px', color: '#374151' }}>
-                📊 Статистика использования
+                Статистика использования
               </h3>
               <div className='stats-grid'>
                 <div className='stat-item'>
