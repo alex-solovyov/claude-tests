@@ -22,14 +22,14 @@ const MODELS: ModelInfo[] = [
 
   // Amazon
   {
-    value: 'amazon/nova-premier-1.0',
+    value: 'amazon/nova-premier-v1',
     label: 'Amazon: Nova Premier 1.0',
     input: 2.5,
     output: 12.5,
     context: 1_000_000
   },
   {
-    value: 'amazon/nova-2-lite',
+    value: 'amazon/nova-2-lite-v1',
     label: 'Amazon: Nova 2 Lite',
     input: 0.3,
     output: 2.5,
