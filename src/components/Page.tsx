@@ -334,7 +334,7 @@ const MODELS: ModelInfo[] = [
     context: 131_072
   },
   {
-    value: '"nvidia/nemotron-nano-12b-v2-vl:free',
+    value: 'nvidia/nemotron-nano-12b-v2-vl:free',
     label: 'NVIDIA: Nemotron Nano 12B 2 VL (free)',
     input: 0,
     output: 0,
