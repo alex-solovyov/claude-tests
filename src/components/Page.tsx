@@ -130,29 +130,8 @@ const MODELS: ModelInfo[] = [
     context: 1_048_576
   },
   {
-    value: 'google/gemini-2.5-pro-preview-06-05',
-    label: 'Google: Gemini 2.5 Pro Preview 06-05',
-    input: 1.25,
-    output: 10,
-    context: 1_048_576
-  },
-  {
-    value: 'google/gemini-2.5-pro-preview-05-06',
-    label: 'Google: Gemini 2.5 Pro Preview 05-06',
-    input: 1.25,
-    output: 10,
-    context: 1_048_576
-  },
-  {
     value: 'google/gemini-2.5-flash',
     label: 'Google: Gemini 2.5 Flash',
-    input: 0.3,
-    output: 2.5,
-    context: 1_048_576
-  },
-  {
-    value: 'google/gemini-2.5-flash-preview-09-2025',
-    label: 'Google: Gemini 2.5 Flash Preview 09-2025',
     input: 0.3,
     output: 2.5,
     context: 1_048_576
@@ -169,20 +148,6 @@ const MODELS: ModelInfo[] = [
     label: 'Google: Gemini 2.5 Flash Lite',
     input: 0.1,
     output: 0.4,
-    context: 1_048_576
-  },
-  {
-    value: 'google/gemini-2.5-flash-lite-preview-09-2025',
-    label: 'Google: Gemini 2.5 Flash Lite Preview 09-2025',
-    input: 0.1,
-    output: 0.4,
-    context: 1_048_576
-  },
-  {
-    value: 'google/gemini-2.0-flash-lite',
-    label: 'Google: Gemini 2.0 Flash Lite',
-    input: 0.075,
-    output: 0.3,
     context: 1_048_576
   },
   {
@@ -589,29 +554,6 @@ const MODELS: ModelInfo[] = [
     input: 3,
     output: 15,
     context: 256_000
-  },
-  {
-    value: 'x-ai/grok-4-fast',
-    label: 'xAI: Grok 4 Fast',
-    input: 0.2,
-    output: 0.5,
-    context: 2_000_000
-  },
-
-  // Z.AI
-  {
-    value: 'z-ai/glm-4.6v',
-    label: 'Z.AI: GLM 4.6V',
-    input: 0.3,
-    output: 0.9,
-    context: 131_072
-  },
-  {
-    value: 'z-ai/glm-4.5v',
-    label: 'Z.AI: GLM 4.5V',
-    input: 0.6,
-    output: 1.8,
-    context: 65_536
   }
 ]
 
