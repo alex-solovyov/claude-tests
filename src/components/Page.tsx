@@ -84,22 +84,6 @@ const MODELS: ModelInfo[] = [
     context: 30_000
   },
 
-  // ByteDance
-  {
-    value: 'bytedance-seed/seed-1.6',
-    label: 'ByteDance Seed: Seed 1.6',
-    input: 0.25,
-    output: 2,
-    context: 262_144
-  },
-  {
-    value: 'bytedance-seed/seed-1.6-flash',
-    label: 'ByteDance Seed: Seed 1.6 Flash',
-    input: 0.075,
-    output: 0.3,
-    context: 262_144
-  },
-
   // Google
   {
     value: 'google/gemini-3-pro-preview',
@@ -431,13 +415,6 @@ const MODELS: ModelInfo[] = [
     label: 'OpenAI: o3',
     input: 2,
     output: 8,
-    context: 200_000
-  },
-  {
-    value: 'openai/o1-pro',
-    label: 'OpenAI: o1-pro',
-    input: 150,
-    output: 600,
     context: 200_000
   },
 
