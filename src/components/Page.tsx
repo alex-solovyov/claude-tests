@@ -327,14 +327,14 @@ const MODELS: ModelInfo[] = [
 
   // NVIDIA
   {
-    value: 'nvidia/nemotron-nano-12b-2-vl',
+    value: 'nvidia/nemotron-nano-12b-v2-vl',
     label: 'NVIDIA: Nemotron Nano 12B 2 VL',
     input: 0.2,
     output: 0.6,
     context: 131_072
   },
   {
-    value: 'nvidia/nemotron-nano-12b-2-vl:free',
+    value: '"nvidia/nemotron-nano-12b-v2-vl:free',
     label: 'NVIDIA: Nemotron Nano 12B 2 VL (free)',
     input: 0,
     output: 0,
@@ -628,6 +628,7 @@ interface UploadedImage {
 
 interface ResultData {
   text: string
+  responseTimeMs: number
   usage: {
     inputTokens: number
     outputTokens: number
@@ -774,6 +775,8 @@ export default function Page() {
         mediaType: img.file.type
       }))
 
+      const startTime = performance.now()
+
       const { data } = await axios.post('/api/openrouter', {
         model,
         max_tokens: maxTokens,
@@ -781,6 +784,8 @@ export default function Page() {
         systemPrompt,
         imageContents
       })
+
+      const elapsed = performance.now() - startTime
 
       const { text, usage = {} } = data
 
@@ -795,6 +800,7 @@ export default function Page() {
 
       setResult({
         text,
+        responseTimeMs: elapsed,
         usage: {
           inputTokens,
           outputTokens,
@@ -1111,6 +1117,14 @@ export default function Page() {
                     {result.usage.costRub.toFixed(2)} ₽
                   </div>
                   <div className='stat-label'>Стоимость в рублях</div>
+                </div>
+                <div className='stat-item'>
+                  <div className='stat-value'>
+                    {result.responseTimeMs >= 1000
+                      ? `${(result.responseTimeMs / 1000).toFixed(1)} с`
+                      : `${Math.round(result.responseTimeMs)} мс`}
+                  </div>
+                  <div className='stat-label'>Время ответа</div>
                 </div>
               </div>
             </div>
